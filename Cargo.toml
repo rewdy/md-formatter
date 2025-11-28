@@ -1,19 +1,33 @@
 [package]
-name = "md-format"
+name = "md-formatter"
 version = "0.1.0"
 edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
 
 [[bin]]
 name = "mdfmt"
 path = "src/main.rs"
+required-features = ["cli"]
+
+[features]
+default = ["cli"]
+cli = ["dep:clap"]
+napi = ["dep:napi", "dep:napi-derive"]
 
 [dependencies]
 pulldown-cmark = "0.9"
-clap = { version = "4.4", features = ["derive"] }
+clap = { version = "4.4", features = ["derive"], optional = true }
 anyhow = "1.0"
+napi = { version = "2", default-features = false, features = ["napi4"], optional = true }
+napi-derive = { version = "2", optional = true }
 
 [dev-dependencies]
 insta = "1.34"
+
+[build-dependencies]
+napi-build = "2.1"
 
 [profile.release]
 opt-level = 3

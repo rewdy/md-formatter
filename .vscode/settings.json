@@ -1,0 +1,10 @@
+{
+  "[markdown]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "never"
+    },
+    "editor.formatOnPaste": false,
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": null,
+  }
+}

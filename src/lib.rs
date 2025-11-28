@@ -1,6 +1,11 @@
+#[cfg(feature = "cli")]
 pub mod cli;
 pub mod formatter;
 pub mod parser;
+
+// Only include NAPI bindings when the napi feature is enabled
+#[cfg(feature = "napi")]
+pub mod napi;
 
 pub use formatter::Formatter;
 pub use parser::{extract_frontmatter, parse_markdown};

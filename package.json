@@ -1,0 +1,63 @@
+{
+  "name": "mdfmt",
+  "version": "0.1.0",
+  "description": "A fast, opinionated Markdown formatter written in Rust",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
+  "napi": {
+    "name": "mdfmt",
+    "triples": {
+      "defaults": true,
+      "additional": [
+        "x86_64-unknown-linux-musl",
+        "aarch64-unknown-linux-gnu",
+        "aarch64-unknown-linux-musl",
+        "aarch64-apple-darwin",
+        "aarch64-pc-windows-msvc"
+      ]
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/md-format"
+  },
+  "license": "MIT",
+  "keywords": [
+    "markdown",
+    "formatter",
+    "lint",
+    "napi-rs",
+    "rust"
+  ],
+  "engines": {
+    "node": ">= 16"
+  },
+  "scripts": {
+    "artifacts": "napi artifacts",
+    "build": "napi build --platform --release --cargo-flags=\"--no-default-features\" --features napi",
+    "build:debug": "napi build --platform --cargo-flags=\"--no-default-features\" --features napi",
+    "clean": "cargo clean && rm -rf *.node",
+    "prepublishOnly": "napi prepublish -t npm",
+    "test": "node test.js",
+    "universal": "napi universal",
+    "version": "napi version"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^2.18.0"
+  },
+  "packageManager": "pnpm@10.15.0",
+  "optionalDependencies": {
+    "@mdfmt/darwin-x64": "0.1.0",
+    "@mdfmt/darwin-arm64": "0.1.0",
+    "@mdfmt/linux-x64-gnu": "0.1.0",
+    "@mdfmt/linux-x64-musl": "0.1.0",
+    "@mdfmt/linux-arm64-gnu": "0.1.0",
+    "@mdfmt/linux-arm64-musl": "0.1.0",
+    "@mdfmt/win32-x64-msvc": "0.1.0",
+    "@mdfmt/win32-arm64-msvc": "0.1.0"
+  }
+}

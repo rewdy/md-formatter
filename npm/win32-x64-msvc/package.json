@@ -1,0 +1,17 @@
+{
+  "name": "@mdfmt/win32-x64-msvc",
+  "version": "0.1.0",
+  "os": ["win32"],
+  "cpu": ["x64"],
+  "main": "mdfmt.win32-x64-msvc.node",
+  "files": ["mdfmt.win32-x64-msvc.node"],
+  "description": "Windows x64 binary for mdfmt",
+  "license": "MIT",
+  "engines": {
+    "node": ">= 16"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/md-format"
+  }
+}

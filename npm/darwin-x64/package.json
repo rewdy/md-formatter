@@ -1,0 +1,17 @@
+{
+  "name": "@mdfmt/darwin-x64",
+  "version": "0.1.0",
+  "os": ["darwin"],
+  "cpu": ["x64"],
+  "main": "mdfmt.darwin-x64.node",
+  "files": ["mdfmt.darwin-x64.node"],
+  "description": "macOS x64 binary for mdfmt",
+  "license": "MIT",
+  "engines": {
+    "node": ">= 16"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/md-format"
+  }
+}

@@ -1,6 +1,6 @@
 use clap::Parser;
-use md_format::cli::{Args, InputSource};
-use md_format::{parse_markdown, extract_frontmatter, Formatter};
+use md_formatter::cli::{Args, InputSource};
+use md_formatter::{parse_markdown, extract_frontmatter, Formatter};
 use std::fs;
 use std::io::{self, Read};
 
