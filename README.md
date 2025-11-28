@@ -82,8 +82,10 @@ soft breaks on re-parsing.
 
 ## Performance
 
-| Scenario | Time | Throughput | | ----------------- | ------- | ---------- | |  
-360KB file | 4ms | ~90MB/s | | Average file (2KB)| <1ms | Instant |
+| Scenario | Time | Throughput |
+| ----------------- | ------- | ---------- |
+| 360KB file | 4ms | ~90MB/s |
+| Average file (2KB)| <1ms | Instant |
 
 ## Architecture
 
@@ -162,14 +164,6 @@ src/
 **Performance:** Excellent ✓
 
 See `STATUS.md` for detailed feature matrix and quality metrics.
-
-## Comparison to Other Tools
-
-| Feature | md-format | Prettier | mdformat | dprint | | --------------- |  
---------- | -------- | -------- | ------ | | Speed | Fast | Slow | Medium | Fast  
-| | Configuration | None | Lots | Some | Some | | Idempotent | Yes | Yes | Yes |  
-Yes | | Markdown only | Yes | No | Yes | Yes | | Opinionated | Yes | Yes |  
-Partial | Partial |
 
 ## Contributing
 
