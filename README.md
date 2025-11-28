@@ -1,6 +1,15 @@
-# md-format
+# md-formatter
+
+> [!WARNING]
+> This is not actually released yet. If you happen to find it, come back later. 😄
+
+![The mad formatter](./md-formatter.png)
 
 A fast, opinionated Markdown formatter written in Rust.
+
+## Why/Approach
+
+Many now use modern tools for linting and formatting node code (biome, oxlint, etc), but these do not support formatting markdown. This tools is meant to provide a rust-based formatter for markdown only. The approach it takes is to parse the markdown with Rust's `pulldown-cmark`, then pump it back out with opinionated formatting. It explicitly ignore code blocks (for now), it does not mess with resizing tables, and otherwise is pretty rudimentary.
 
 ## Quick Start
 
@@ -12,7 +21,7 @@ A fast, opinionated Markdown formatter written in Rust.
 
 ## Installation
 
-```
+```bash
 cargo build --release
 ./target/release/mdfmt --help
 ```
@@ -21,7 +30,7 @@ cargo build --release
 
 ### Basic
 
-```
+```bash
 # Format and print to stdout
 mdfmt myfile.md
 
@@ -40,7 +49,7 @@ cat file.md | mdfmt --stdin
 
 ### Integration
 
-```
+```bash
 # Pre-commit hook
 mdfmt --check *.md
 
@@ -96,7 +105,7 @@ The formatter never parses the output, so idempotence is guaranteed by design.
 
 ## CLI Options
 
-```
+```bash
 Usage: mdfmt [OPTIONS] [PATH]
 
 Arguments:
@@ -113,7 +122,7 @@ Options:
 
 ## Testing
 
-```
+```bash
 # Run all tests
 cargo test --release --lib
 
@@ -135,7 +144,7 @@ cargo build --release
 
 ## Project Structure
 
-```
+```bash
 src/
 ├── main.rs       - CLI entry point and file I/O
 ├── cli.rs        - Argument parsing (clap)
@@ -154,10 +163,6 @@ src/
 
 See `STATUS.md` for detailed feature matrix and quality metrics.
 
-## License
-
-MIT (or your preferred license)
-
 ## Comparison to Other Tools
 
 | Feature | md-format | Prettier | mdformat | dprint | | --------------- |  
@@ -175,3 +180,7 @@ This is a working tool for demonstration purposes. The primary focus is:
 - Simplicity - No configuration beyond line width
 
 Feel free to fork and adapt for your needs.
+
+## License
+
+MIT

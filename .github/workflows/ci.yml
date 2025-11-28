@@ -237,8 +237,9 @@ jobs:
 
       - name: Publish
         run: |
-          npm config set provenance true
-          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-          npm publish --access public
+          echo "Not publishing yet\! TBD"
+          # npm config set provenance true
+          # echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+          # npm publish --access public
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
