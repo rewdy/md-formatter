@@ -9,7 +9,7 @@
     "index.d.ts"
   ],
   "napi": {
-    "name": "mdfmt",
+    "name": "md-formatter",
     "triples": {
       "defaults": true,
       "additional": [
@@ -23,7 +23,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/md-format"
+    "url": "https://github.com/rewdy/md-formatter"
   },
   "license": "MIT",
   "keywords": [
@@ -49,15 +49,5 @@
   "devDependencies": {
     "@napi-rs/cli": "^2.18.0"
   },
-  "packageManager": "pnpm@10.15.0",
-  "optionalDependencies": {
-    "@mdfmt/darwin-x64": "0.1.0",
-    "@mdfmt/darwin-arm64": "0.1.0",
-    "@mdfmt/linux-x64-gnu": "0.1.0",
-    "@mdfmt/linux-x64-musl": "0.1.0",
-    "@mdfmt/linux-arm64-gnu": "0.1.0",
-    "@mdfmt/linux-arm64-musl": "0.1.0",
-    "@mdfmt/win32-x64-msvc": "0.1.0",
-    "@mdfmt/win32-arm64-msvc": "0.1.0"
-  }
+  "packageManager": "pnpm@10.15.0"
 }

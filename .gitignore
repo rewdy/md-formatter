@@ -7,9 +7,6 @@ node_modules/
 .npm/
 *.node
 
-# It's weird to exclude this, but because of the way we build we don't actually want it.
-pnpm-lock.yaml
-
 # OS
 .DS_Store
 
