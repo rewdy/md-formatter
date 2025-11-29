@@ -10,7 +10,7 @@ on:
 
 env:
   DEBUG: napi:*
-  APP_NAME: mdfmt
+  APP_NAME: md-formatter
   MACOSX_DEPLOYMENT_TARGET: '10.13'
 
 permissions:
