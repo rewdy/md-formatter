@@ -310,8 +310,10 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { formatMarkdown, formatMarkdownWithResult, checkMarkdown } = nativeBinding
+const { formatMarkdown, formatMarkdownWithResult, checkMarkdown, formatFiles, checkFiles } = nativeBinding
 
 module.exports.formatMarkdown = formatMarkdown
 module.exports.formatMarkdownWithResult = formatMarkdownWithResult
 module.exports.checkMarkdown = checkMarkdown
+module.exports.formatFiles = formatFiles
+module.exports.checkFiles = checkFiles

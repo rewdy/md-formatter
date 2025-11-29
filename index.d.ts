@@ -43,3 +43,41 @@ export declare function formatMarkdownWithResult(input: string, options?: Format
  * @returns true if the content is already formatted, false otherwise
  */
 export declare function checkMarkdown(input: string, options?: FormatOptions | undefined | null): boolean
+/** Result of a file format operation */
+export interface FileResult {
+  /** The file path */
+  path: string
+  /** Whether the file was changed (or would be changed in check mode) */
+  changed: boolean
+  /** Error message if the file could not be processed */
+  error?: string
+}
+/** Options for file operations */
+export interface FileOptions {
+  /** Target line width for wrapping (default: 80) */
+  width?: number
+  /** How to wrap prose: "always", "never", or "preserve" (default: "preserve") */
+  wrap?: string
+  /** How to number ordered lists: "ascending" (1, 2, 3) or "one" (all 1.) (default: "ascending") */
+  orderedList?: string
+  /** Additional directories to exclude */
+  exclude?: Array<string>
+  /** Don't exclude any directories by default */
+  noDefaultExcludes?: boolean
+}
+/**
+ * Format files matching the given patterns and write changes to disk.
+ *
+ * @param patterns - File paths, directories, or glob patterns
+ * @param options - Optional formatting and file options
+ * @returns Array of results for each file processed
+ */
+export declare function formatFiles(patterns: Array<string>, options?: FileOptions | undefined | null): Array<FileResult>
+/**
+ * Check if files matching the given patterns are formatted correctly.
+ *
+ * @param patterns - File paths, directories, or glob patterns
+ * @param options - Optional formatting and file options
+ * @returns Array of results for each file checked
+ */
+export declare function checkFiles(patterns: Array<string>, options?: FileOptions | undefined | null): Array<FileResult>

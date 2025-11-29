@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-const path = require("path");
-const { formatMarkdown, checkMarkdown } = require("../index.js");
+const { formatMarkdown, formatFiles, checkFiles } = require("../index.js");
 
 const args = process.argv.slice(2);
 
@@ -13,7 +11,9 @@ let orderedList = "ascending";
 let check = false;
 let write = false;
 let stdin = false;
-let files = [];
+let patterns = [];
+let exclude = [];
+let noDefaultExcludes = false;
 
 function printHelp() {
   console.log(`mdfmt - A fast, opinionated Markdown formatter
@@ -21,7 +21,7 @@ function printHelp() {
 Usage: mdfmt [OPTIONS] [FILES...]
 
 Arguments:
-  [FILES...]  Markdown files or glob patterns to format
+  [FILES...]  Markdown files, directories, or glob patterns to format
 
 Options:
   -w, --write              Write formatted output back to file
@@ -30,6 +30,8 @@ Options:
       --width <NUMBER>     Maximum line width [default: 80]
       --wrap <MODE>        Prose wrapping: always, never, preserve [default: preserve]
       --ordered-list <MODE> Ordered list style: ascending, one [default: ascending]
+      --exclude <DIR>      Additional directories to exclude (can be used multiple times)
+      --no-default-excludes Don't exclude node_modules, .git, etc. by default
   -h, --help               Print help
   -V, --version            Print version`);
 }
@@ -73,15 +75,25 @@ for (let i = 0; i < args.length; i++) {
       console.error("Error: --ordered-list must be ascending or one");
       process.exit(2);
     }
+  } else if (arg === "--exclude") {
+    exclude.push(args[++i]);
+  } else if (arg === "--no-default-excludes") {
+    noDefaultExcludes = true;
   } else if (arg.startsWith("-")) {
     console.error(`Error: Unknown option: ${arg}`);
     process.exit(2);
   } else {
-    files.push(arg);
+    patterns.push(arg);
   }
 }
 
-const options = { width, wrap, orderedList };
+const options = {
+  width,
+  wrap,
+  orderedList,
+  exclude: exclude.length > 0 ? exclude : undefined,
+  noDefaultExcludes: noDefaultExcludes || undefined,
+};
 
 async function readStdin() {
   return new Promise((resolve) => {
@@ -101,8 +113,8 @@ async function main() {
     process.exit(0);
   }
 
-  // Require files if not using stdin
-  if (files.length === 0) {
+  // Require patterns if not using stdin
+  if (patterns.length === 0) {
     printHelp();
     process.exit(2);
   }
@@ -110,32 +122,86 @@ async function main() {
   let hasErrors = false;
   let needsFormatting = false;
 
-  for (const file of files) {
-    try {
-      const content = fs.readFileSync(file, "utf8");
+  if (check) {
+    // Check mode - use Rust's checkFiles
+    const results = checkFiles(patterns, options);
 
-      if (check) {
-        const isFormatted = checkMarkdown(content, options);
-        if (!isFormatted) {
-          console.log(`Would reformat: ${file}`);
-          needsFormatting = true;
-        }
-      } else {
-        const formatted = formatMarkdown(content, options);
-
-        if (write) {
-          if (formatted !== content) {
-            fs.writeFileSync(file, formatted);
-            console.log(`Formatted: ${file}`);
-          }
-        } else {
-          process.stdout.write(formatted);
-        }
-      }
-    } catch (err) {
-      console.error(`Error processing ${file}: ${err.message}`);
-      hasErrors = true;
+    if (results.length === 0) {
+      console.error("No markdown files found.");
+      process.exit(2);
     }
+
+    for (const result of results) {
+      if (result.error) {
+        console.error(`Error: ${result.path}: ${result.error}`);
+        hasErrors = true;
+      } else if (result.changed) {
+        console.log(`Would reformat: ${result.path}`);
+        needsFormatting = true;
+      }
+    }
+
+    const wouldChange = results.filter((r) => r.changed && !r.error).length;
+    const total = results.filter((r) => !r.error).length;
+
+    if (wouldChange > 0) {
+      console.error(`${wouldChange} file(s) would be reformatted`);
+    } else {
+      console.error(`All ${total} file(s) are formatted correctly`);
+    }
+  } else if (write) {
+    // Write mode - use Rust's formatFiles
+    const results = formatFiles(patterns, options);
+
+    if (results.length === 0) {
+      console.error("No markdown files found.");
+      process.exit(2);
+    }
+
+    for (const result of results) {
+      if (result.error) {
+        console.error(`Error: ${result.path}: ${result.error}`);
+        hasErrors = true;
+      } else if (result.changed) {
+        console.log(`Formatted: ${result.path}`);
+      }
+    }
+  } else {
+    // Output to stdout - only works with single file
+    if (patterns.length > 1) {
+      console.error(
+        "Error: Cannot output multiple files to stdout. Use --write to format in-place."
+      );
+      process.exit(2);
+    }
+
+    // For stdout mode, we still use checkFiles to resolve patterns,
+    // but then read and format manually
+    const results = checkFiles(patterns, options);
+
+    if (results.length === 0) {
+      console.error("No markdown files found.");
+      process.exit(2);
+    }
+
+    if (results.length > 1) {
+      console.error(
+        "Error: Pattern matches multiple files. Use --write to format in-place."
+      );
+      process.exit(2);
+    }
+
+    const result = results[0];
+    if (result.error) {
+      console.error(`Error: ${result.path}: ${result.error}`);
+      process.exit(2);
+    }
+
+    // Read and format the single file
+    const fs = require("fs");
+    const content = fs.readFileSync(result.path, "utf8");
+    const formatted = formatMarkdown(content, options);
+    process.stdout.write(formatted);
   }
 
   if (hasErrors) {
