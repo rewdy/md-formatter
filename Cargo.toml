@@ -2,6 +2,24 @@
 name = "md-formatter"
 version = "0.1.0"
 edition = "2021"
+description = "A fast, opinionated Markdown formatter"
+license = "MIT"
+repository = "https://github.com/rewdy/md-formatter"
+homepage = "https://github.com/rewdy/md-formatter"
+documentation = "https://docs.rs/md-formatter"
+readme = "README.md"
+keywords = ["markdown", "formatter", "cli", "pulldown-cmark"]
+categories = ["command-line-utilities", "text-processing", "development-tools"]
+authors = ["Andrew Meyer"]
+exclude = [
+    ".github/",
+    "npm/",
+    "*.node",
+    "pnpm-lock.yaml",
+    "package.json",
+    "tsconfig.json",
+    "__test__/",
+]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
