@@ -51,6 +51,13 @@ function git(command) {
 }
 
 /**
+ * Run a cargo command
+ */
+function cargo(command) {
+  return execSync(`cargo ${command}`, { cwd: ROOT, encoding: "utf-8" }).trim();
+}
+
+/**
  * Check if there are uncommitted changes
  */
 function hasUncommittedChanges() {
@@ -202,6 +209,28 @@ for (const platform of platforms) {
   } catch (e) {
     // Skip if package.json doesn't exist
   }
+}
+
+// Update Cargo.lock
+if (!dryRun && changes.some((c) => c.file === "Cargo.toml")) {
+  try {
+    console.log("\n🔒 Updating Cargo.lock...");
+    cargo("check --quiet");
+    changes.push({
+      file: "Cargo.lock",
+      old: currentVersion,
+      new: newVersion,
+    });
+    console.log("  ✓ Cargo.lock updated");
+  } catch (error) {
+    console.warn("  ⚠ Warning: Could not update Cargo.lock:", error.message);
+  }
+} else if (dryRun) {
+  changes.push({
+    file: "Cargo.lock",
+    old: currentVersion,
+    new: newVersion,
+  });
 }
 
 // Print summary
