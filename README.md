@@ -31,33 +31,64 @@ cargo build --release
 ### Basic
 
 ```bash
-# Format and print to stdout
-mdfmt myfile.md
+# Format all markdown files in current directory (prints to stdout)
+mdfmt .
 
-# Format in-place
-mdfmt --write myfile.md
+# Format all markdown files in-place
+mdfmt . --write
 
-# Check if formatted (for CI)
-mdfmt --check myfile.md
+# Check if all files are formatted (for CI)
+mdfmt . --check
+
+# Format a specific file
+mdfmt README.md
+
+# Format multiple files or directories
+mdfmt src/ docs/ README.md
 
 # Custom line width
-mdfmt --width 100 myfile.md
+mdfmt . --width 100
 
 # Read from stdin
-cat file.md | mdfmt --stdin
+cat file.md | mdfmt -
+```
+
+### Glob Patterns
+
+```bash
+# Use glob patterns
+mdfmt "**/*.md"
+
+# Format files in a specific directory
+mdfmt docs/
+
+# Multiple paths
+mdfmt src/ tests/ README.md
+```
+
+### Exclusions
+
+By default, `mdfmt` excludes common directories: `node_modules`, `target`, `.git`, `vendor`, `dist`, `build`.
+
+```bash
+# Add additional exclusions
+mdfmt . --exclude my-vendor --exclude tmp
+
+# Include everything (no default exclusions)
+mdfmt . --no-default-excludes
 ```
 
 ### Integration
 
 ```bash
 # Pre-commit hook
-mdfmt --check *.md
+mdfmt . --check
 
-# Git batch processing
-git diff HEAD~1 --name-only -- '*.md' | xargs mdfmt --write
+# CI pipeline
+mdfmt . --check || exit 1
 
-# Find and format all markdown files
-find . -name '*.md' -exec mdfmt --write {} \;
+# Format only changed files
+git diff --name-only -- '*.md' | xargs mdfmt --write
 ```
 
 ## Formatting Rules
@@ -107,20 +138,24 @@ The formatter never parses the output, so idempotence is guaranteed by design.
 
 ## CLI Options
 
-```bash
-Usage: mdfmt [OPTIONS] [PATH]
+```
+Usage: mdfmt [OPTIONS] [PATH]...
 
 Arguments:
-  [PATH]  File to format (use - for stdin)
+  [PATH]...  Files or directories to format (supports glob patterns, use - for stdin)
 
 Options:
-  -w, --write          Write formatted output to file in-place
-      --check          Check if file is formatted (exit with 1 if not)
-      --stdin          Read from stdin
-      --width <WIDTH>  Line width for wrapping (default: 80)
-  -h, --help           Print help
-  -V, --version        Print version
+  -w, --write                Write formatted output to file in-place
+      --check                Check if files are formatted (exit with 1 if not)
+      --stdin                Read from stdin
+      --width <WIDTH>        Line width for wrapping [default: 80]
+      --exclude <DIR>        Additional directories to exclude
+      --no-default-excludes  Don't exclude any directories by default
+  -h, --help                 Print help
+  -V, --version              Print version
 ```
+
+**Default exclusions:** `node_modules`, `target`, `.git`, `vendor`, `dist`, `build`
 
 ## Testing
 

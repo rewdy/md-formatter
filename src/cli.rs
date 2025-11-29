@@ -1,20 +1,24 @@
 use clap::Parser;
+use glob::glob;
 use std::path::PathBuf;
+
+/// Default directories to exclude when searching
+const DEFAULT_EXCLUDES: &[&str] = &["node_modules", "target", ".git", "vendor", "dist", "build"];
 
 #[derive(Parser, Debug)]
 #[command(name = "mdfmt")]
 #[command(version = "0.1.0")]
 #[command(about = "Fast, opinionated Markdown formatter", long_about = None)]
 pub struct Args {
-    /// File to format (use - for stdin)
+    /// Files or directories to format (supports glob patterns, use - for stdin)
     #[arg(value_name = "PATH")]
-    pub path: Option<String>,
+    pub paths: Vec<String>,
 
     /// Write formatted output to file in-place
     #[arg(short, long)]
     pub write: bool,
 
-    /// Check if file is formatted (exit with 1 if not)
+    /// Check if files are formatted (exit with 1 if not)
     #[arg(long)]
     pub check: bool,
 
@@ -25,22 +29,116 @@ pub struct Args {
     /// Line width for wrapping (default: 80)
     #[arg(long, default_value = "80")]
     pub width: usize,
+
+    /// Additional directories to exclude (node_modules, target, .git, vendor, dist, build are excluded by default)
+    #[arg(long = "exclude", value_name = "DIR")]
+    pub excludes: Vec<String>,
+
+    /// Don't exclude any directories by default
+    #[arg(long)]
+    pub no_default_excludes: bool,
 }
 
 impl Args {
-    /// Determine the input path
-    pub fn get_input_path(&self) -> Result<InputSource, String> {
-        if self.stdin {
-            Ok(InputSource::Stdin)
-        } else if let Some(path) = &self.path {
-            if path == "-" {
-                Ok(InputSource::Stdin)
-            } else {
-                Ok(InputSource::File(PathBuf::from(path)))
-            }
+    /// Get the list of directories to exclude
+    fn get_excludes(&self) -> Vec<String> {
+        let mut excludes: Vec<String> = if self.no_default_excludes {
+            Vec::new()
         } else {
-            Err("No input provided. Use --stdin or specify a file path.".to_string())
+            DEFAULT_EXCLUDES.iter().map(|s| s.to_string()).collect()
+        };
+        excludes.extend(self.excludes.clone());
+        excludes
+    }
+
+    /// Check if a path should be excluded
+    fn should_exclude(&self, path: &PathBuf, excludes: &[String]) -> bool {
+        for component in path.components() {
+            if let std::path::Component::Normal(name) = component {
+                let name_str = name.to_string_lossy();
+                if excludes.iter().any(|e| e == name_str.as_ref()) {
+                    return true;
+                }
+            }
         }
+        false
+    }
+
+    /// Resolve input paths to a list of markdown files or stdin
+    pub fn get_input_sources(&self) -> Result<Vec<InputSource>, String> {
+        if self.stdin || (self.paths.len() == 1 && self.paths[0] == "-") {
+            return Ok(vec![InputSource::Stdin]);
+        }
+
+        if self.paths.is_empty() {
+            return Err("No input provided. Use --stdin or specify file paths.".to_string());
+        }
+
+        let excludes = self.get_excludes();
+        let mut sources = Vec::new();
+
+        for pattern in &self.paths {
+            let path = PathBuf::from(pattern);
+
+            if path.is_dir() {
+                // If it's a directory, find all .md files recursively
+                let glob_pattern = format!("{}/**/*.md", pattern);
+                self.collect_markdown_files(&glob_pattern, &mut sources, &excludes)?;
+            } else if path.is_file() {
+                // Single file - must be .md
+                if Self::is_markdown_file(&path) {
+                    sources.push(InputSource::File(path));
+                } else {
+                    return Err(format!(
+                        "File '{}' is not a markdown file (.md)",
+                        path.display()
+                    ));
+                }
+            } else {
+                // Treat as glob pattern
+                self.collect_markdown_files(pattern, &mut sources, &excludes)?;
+            }
+        }
+
+        if sources.is_empty() {
+            return Err("No markdown files found.".to_string());
+        }
+
+        Ok(sources)
+    }
+
+    fn collect_markdown_files(
+        &self,
+        pattern: &str,
+        sources: &mut Vec<InputSource>,
+        excludes: &[String],
+    ) -> Result<(), String> {
+        let entries =
+            glob(pattern).map_err(|e| format!("Invalid glob pattern '{}': {}", pattern, e))?;
+
+        for entry in entries {
+            match entry {
+                Ok(path) => {
+                    if path.is_file()
+                        && Self::is_markdown_file(&path)
+                        && !self.should_exclude(&path, excludes)
+                    {
+                        sources.push(InputSource::File(path));
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Warning: Could not read path: {}", e);
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn is_markdown_file(path: &PathBuf) -> bool {
+        path.extension()
+            .map(|ext| ext.to_string_lossy().to_lowercase() == "md")
+            .unwrap_or(false)
     }
 }
 

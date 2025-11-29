@@ -13,12 +13,13 @@ required-features = ["cli"]
 
 [features]
 default = ["cli"]
-cli = ["dep:clap"]
+cli = ["dep:clap", "dep:glob"]
 napi = ["dep:napi", "dep:napi-derive"]
 
 [dependencies]
 pulldown-cmark = "0.9"
 clap = { version = "4.4", features = ["derive"], optional = true }
+glob = { version = "0.3", optional = true }
 anyhow = "1.0"
 napi = { version = "2", default-features = false, features = ["napi4"], optional = true }
 napi-derive = { version = "2", optional = true }

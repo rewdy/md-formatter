@@ -1,16 +1,52 @@
 use clap::Parser;
 use md_formatter::cli::{Args, InputSource};
-use md_formatter::{parse_markdown, extract_frontmatter, Formatter};
+use md_formatter::{extract_frontmatter, parse_markdown, Formatter};
 use std::fs;
 use std::io::{self, Read};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    let input_source = args.get_input_path()?;
+    let sources = args.get_input_sources()?;
+    let mut has_errors = false;
+    let mut files_checked = 0;
+    let mut files_would_change = 0;
 
-    // Determine if we need to read from stdin or file
-    let (content, path_for_output) = match &input_source {
+    for source in sources {
+        match process_source(&source, &args) {
+            Ok(changed) => {
+                if args.check {
+                    files_checked += 1;
+                    if changed {
+                        files_would_change += 1;
+                        has_errors = true;
+                    }
+                }
+            }
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                has_errors = true;
+            }
+        }
+    }
+
+    if args.check && files_checked > 0 {
+        if files_would_change > 0 {
+            eprintln!("{} file(s) would be reformatted", files_would_change);
+        } else {
+            eprintln!("All {} file(s) are formatted correctly", files_checked);
+        }
+    }
+
+    if has_errors {
+        std::process::exit(1);
+    }
+
+    Ok(())
+}
+
+fn process_source(source: &InputSource, args: &Args) -> Result<bool, Box<dyn std::error::Error>> {
+    let (content, path_for_output) = match source {
         InputSource::Stdin => {
             let mut buffer = String::new();
             io::stdin().read_to_string(&mut buffer)?;
@@ -37,16 +73,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         formatted
     };
 
+    let changed = content != final_output;
+
     // Output
     if let Some(path) = path_for_output {
         if args.check {
-            if content != final_output {
-                eprintln!("File would be reformatted: {}", path.display());
-                std::process::exit(1);
+            if changed {
+                eprintln!("Would reformat: {}", path.display());
             }
         } else if args.write {
-            fs::write(&path, &final_output)?;
-            println!("Formatted: {}", path.display());
+            if changed {
+                fs::write(&path, &final_output)?;
+                eprintln!("Formatted: {}", path.display());
+            }
         } else {
             print!("{}", final_output);
         }
@@ -55,6 +94,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         print!("{}", final_output);
     }
 
-    Ok(())
+    Ok(changed)
 }
-
