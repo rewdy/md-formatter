@@ -170,7 +170,7 @@ impl Formatter {
                     }
                     result.push(')');
                 }
-                InlineElement::HardBreak => result.push_str("\u{FFFF}"), // Placeholder for hard break
+                InlineElement::HardBreak => result.push('\u{FFFF}'), // Placeholder for hard break
                 InlineElement::SoftBreak => result.push(' '),
             }
         }

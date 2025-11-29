@@ -6,5 +6,8 @@
     "editor.formatOnPaste": false,
     "editor.formatOnSave": false,
     "editor.defaultFormatter": null,
-  }
+  },
+  "cSpell.words": [
+    "napi"
+  ]
 }

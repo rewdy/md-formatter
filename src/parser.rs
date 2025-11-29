@@ -20,6 +20,6 @@ pub fn extract_frontmatter(input: &str) -> (Option<String>, &str) {
 }
 
 /// Parse markdown into events (GFM tables not needed for basic support)
-pub fn parse_markdown(input: &str) -> Vec<Event> {
+pub fn parse_markdown(input: &str) -> Vec<Event<'_>> {
     Parser::new(input).collect()
 }
