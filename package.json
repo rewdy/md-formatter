@@ -4,9 +4,13 @@
   "description": "A fast, opinionated Markdown formatter written in Rust",
   "main": "index.js",
   "types": "index.d.ts",
+  "bin": {
+    "mdfmt": "bin/mdfmt.js"
+  },
   "files": [
     "index.js",
-    "index.d.ts"
+    "index.d.ts",
+    "bin"
   ],
   "napi": {
     "name": "md-formatter",
