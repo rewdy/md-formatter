@@ -6,7 +6,7 @@ The md-formatter ("mad formatter") is a fast, opinionated Markdown formatter wri
 
 ## Why/Approach
 
-Many now use modern tools for linting and formatting node code (biome, oxlint, etc), but these do not support formatting markdown. This tools is meant to provide a rust-based formatter for markdown only. The approach it takes is to parse the markdown with Rust's `pulldown-cmark`, then pump it back out with opinionated formatting. It explicitly ignore code blocks (for now), it does not mess with resizing tables, and otherwise is pretty rudimentary.
+Many now use modern tools for linting and formatting node code (biome, oxlint, etc), but these do not support formatting markdown. This tools is meant to provide a rust-based formatter for markdown only. The approach it takes is to parse the markdown with Rust's `pulldown-cmark`, then pump it back out with opinionated formatting. For simplicity, it explicitly ignores code blocks (for now), tables are handled minimally, and otherwise is pretty rudimentary.
 
 ## Quick Start
 
