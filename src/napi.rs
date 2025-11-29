@@ -13,7 +13,7 @@ pub struct FormatOptions {
     pub width: Option<u32>,
     /// How to wrap prose: "always", "never", or "preserve" (default: "preserve")
     pub wrap: Option<String>,
-    /// How to number ordered lists: "ascending" (1, 2, 3) or "one" (all 1.) (default: "one")
+    /// How to number ordered lists: "ascending" (1, 2, 3) or "one" (all 1.) (default: "ascending")
     pub ordered_list: Option<String>,
 }
 

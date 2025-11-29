@@ -9,6 +9,8 @@ export interface FormatOptions {
   width?: number
   /** How to wrap prose: "always", "never", or "preserve" (default: "preserve") */
   wrap?: string
+  /** How to number ordered lists: "ascending" (1, 2, 3) or "one" (all 1.) (default: "ascending") */
+  orderedList?: string
 }
 /** Result of a format operation */
 export interface FormatResult {

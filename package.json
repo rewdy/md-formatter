@@ -43,6 +43,7 @@
     "bump": "node scripts/bump-version.mjs",
     "clean": "cargo clean && rm -rf *.node",
     "prepublishOnly": "napi prepublish -t npm",
+    "preflight": "pnpm clean && pnpm build && pnpm test",
     "test": "node test.js",
     "version": "napi version"
   },
