@@ -11,7 +11,7 @@ Many now use modern tools for linting and formatting node code (biome, oxlint, e
 ## Quick Start
 
 **Fast** - Formats 360KB of Markdown in 4ms (~90MB/s)  
-**Opinionated** - Minimal configuration (`--width`, `--wrap`)  
+**Opinionated** - Minimal configuration (`--width`, `--wrap`, `--ordered-list`)  
 **Idempotent** - `format(format(x)) == format(x)` guaranteed  
 **Safe** - Uses hard breaks to preserve structure across re-parsing  
 **Complete** - All CommonMark + GFM elements supported
@@ -115,6 +115,23 @@ mdfmt . --wrap preserve
 | `never` | Unwrap each paragraph to a single long line |
 | `preserve` | Leave existing line breaks unchanged (default) |
 
+### Ordered Lists
+
+Control how ordered list items are numbered with the `--ordered-list` option:
+
+```bash
+# Renumber items sequentially (default)
+mdfmt . --ordered-list ascending
+
+# Use 1. for all items
+mdfmt . --ordered-list one
+```
+
+| Mode | Description |
+|------|-------------|
+| `ascending` | Renumber items sequentially: 1, 2, 3, ... (default) |
+| `one` | Use `1.` for all items |
+
 ### Integration
 
 ```bash
@@ -177,7 +194,8 @@ import { formatMarkdown, checkMarkdown } from '@rewdy/md-formatter';
 // Format a string
 const formatted = formatMarkdown(input, {
   width: 80,
-  wrap: 'preserve'
+  wrap: 'preserve',
+  orderedList: 'ascending'
 });
 
 // Check if formatted (returns boolean)
@@ -190,7 +208,7 @@ const isFormatted = checkMarkdown(input);
 
 - Paragraphs (line breaks controlled by `--wrap` mode)
 - Headings (normalized to `# Heading` format)
-- Lists (unordered `-`, ordered `1.`, with nesting)
+- Lists (unordered `-`, ordered with `--ordered-list` mode, with nesting)
 - Blockquotes (with `>` prefix per depth)
 - Code blocks (fenced, language tags preserved)
 - Inline code, emphasis, links
@@ -238,15 +256,16 @@ Arguments:
   [PATH]...  Files or directories to format (supports glob patterns, use - for stdin)
 
 Options:
-  -w, --write                Write formatted output to file in-place
-      --check                Check if files are formatted (exit with 1 if not)
-      --stdin                Read from stdin
-      --width <WIDTH>        Line width for wrapping [default: 80]
-      --wrap <MODE>          How to wrap prose: always, never, preserve [default: preserve]
-      --exclude <DIR>        Additional directories to exclude
-      --no-default-excludes  Don't exclude any directories by default
-  -h, --help                 Print help
-  -V, --version              Print version
+  -w, --write                   Write formatted output to file in-place
+      --check                   Check if files are formatted (exit with 1 if not)
+      --stdin                   Read from stdin
+      --width <WIDTH>           Line width for wrapping [default: 80]
+      --wrap <MODE>             How to wrap prose: always, never, preserve [default: preserve]
+      --ordered-list <MODE>     How to number ordered lists: ascending, one [default: ascending]
+      --exclude <DIR>           Additional directories to exclude
+      --no-default-excludes     Don't exclude any directories by default
+  -h, --help                    Print help
+  -V, --version                 Print version
 ```
 
 **Default exclusions:** `node_modules`, `target`, `.git`, `vendor`, `dist`, `build`
@@ -264,12 +283,12 @@ cargo test --release --lib test_idempotence -- --nocapture
 cargo build --release
 ```
 
-**Current status:** 22 unit tests passing ✓
+**Current status:** 25 unit tests passing ✓
 
 ## Known Limitations
 
 - **Autolinks** - Converted to regular links (parser limitation)
-- **Configuration** - Only `--width` and `--wrap` options supported (by design)
+- **Configuration** - Only `--width`, `--wrap`, and `--ordered-list` options supported (by design)
 - **MDX** - Not supported (different language)
 
 ## Project Structure
@@ -285,9 +304,9 @@ src/
 
 ## Status
 
-**Version:** 0.1.0  
+**Version:** 0.1.1  
 **MVP:** Complete ✓  
-**Tests:** 22/22 passing ✓  
+**Tests:** 25/25 passing ✓  
 **Idempotence:** Verified ✓  
 **Performance:** Excellent ✓
 
