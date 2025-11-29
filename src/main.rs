@@ -63,7 +63,8 @@ fn process_source(source: &InputSource, args: &Args) -> Result<bool, Box<dyn std
 
     // Parse and format the markdown content (without frontmatter)
     let events = parse_markdown(markdown_content);
-    let mut formatter = Formatter::new(args.width);
+    let wrap_mode: md_formatter::WrapMode = args.wrap.into();
+    let mut formatter = Formatter::with_wrap_mode(args.width, wrap_mode);
     let formatted = formatter.format(events);
 
     // Prepend frontmatter if it was present

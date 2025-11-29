@@ -5,7 +5,7 @@
 
 ![The mad formatter](./md-formatter.png)
 
-A fast, opinionated Markdown formatter written in Rust.
+The md-formatter (/ˈmæd ˈfɔːrmætər/) is a fast, opinionated Markdown formatter written in Rust.
 
 ## Why/Approach
 
@@ -14,7 +14,7 @@ Many now use modern tools for linting and formatting node code (biome, oxlint, e
 ## Quick Start
 
 **Fast** - Formats 360KB of Markdown in 4ms (~90MB/s)  
-**Opinionated** - Zero configuration (except `--width`)  
+**Opinionated** - Minimal configuration (`--width`, `--wrap`)  
 **Idempotent** - `format(format(x)) == format(x)` guaranteed  
 **Safe** - Uses hard breaks to preserve structure across re-parsing  
 **Complete** - All CommonMark + GFM elements supported
@@ -78,6 +78,27 @@ mdfmt . --exclude my-vendor --exclude tmp
 mdfmt . --no-default-excludes
 ```
 
+### Prose Wrapping
+
+Control how prose (paragraph text) is wrapped with the `--wrap` option:
+
+```bash
+# Reflow prose to fit line width (default: 80)
+mdfmt . --wrap always
+
+# Unwrap prose into single lines per paragraph
+mdfmt . --wrap never
+
+# Keep existing line breaks (default)
+mdfmt . --wrap preserve
+```
+
+| Mode | Description |
+|------|-------------|
+| `always` | Reflow text to fit within line width |
+| `never` | Unwrap each paragraph to a single long line |
+| `preserve` | Leave existing line breaks unchanged (default) |
+
 ### Integration
 
 ```bash
@@ -95,7 +116,7 @@ git diff --name-only -- '*.md' | xargs mdfmt --write
 
 ### Supported Elements
 
-- Paragraphs (reflowed to 80 chars, configurable)
+- Paragraphs (line breaks controlled by `--wrap` mode)
 - Headings (normalized to `# Heading` format)
 - Lists (unordered `-`, ordered `1.`, with nesting)
 - Blockquotes (with `>` prefix per depth)
@@ -149,6 +170,7 @@ Options:
       --check                Check if files are formatted (exit with 1 if not)
       --stdin                Read from stdin
       --width <WIDTH>        Line width for wrapping [default: 80]
+      --wrap <MODE>          How to wrap prose: always, never, preserve [default: preserve]
       --exclude <DIR>        Additional directories to exclude
       --no-default-excludes  Don't exclude any directories by default
   -h, --help                 Print help
@@ -170,7 +192,7 @@ cargo test --release --lib test_idempotence -- --nocapture
 cargo build --release
 ```
 
-**Current status:** 14 unit tests passing ✓
+**Current status:** 22 unit tests passing ✓
 
 ## Known Limitations
 
@@ -194,7 +216,7 @@ src/
 
 **Version:** 0.1.0  
 **MVP:** Complete ✓  
-**Tests:** 14/14 passing ✓  
+**Tests:** 22/22 passing ✓  
 **Idempotence:** Verified ✓  
 **Performance:** Excellent ✓
 
@@ -206,7 +228,7 @@ This is a working tool for demonstration purposes. The primary focus is:
 
 - Correctness - All CommonMark rules implemented
 - Performance - Zero unnecessary allocations
-- Simplicity - No configuration beyond line width
+- Simplicity - Minimal configuration (width and wrap mode only)
 
 Feel free to fork and adapt for your needs.
 

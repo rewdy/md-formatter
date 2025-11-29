@@ -7,6 +7,8 @@
 export interface FormatOptions {
   /** Target line width for wrapping (default: 80) */
   width?: number
+  /** How to wrap prose: "always", "never", or "preserve" (default: "preserve") */
+  wrap?: string
 }
 /** Result of a format operation */
 export interface FormatResult {

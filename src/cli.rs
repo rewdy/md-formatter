@@ -1,6 +1,28 @@
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use glob::glob;
 use std::path::PathBuf;
+
+/// How to handle prose wrapping
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, ValueEnum)]
+pub enum WrapMode {
+    /// Wrap prose if it exceeds the print width
+    Always,
+    /// Un-wrap each block of prose into one line
+    Never,
+    /// Do nothing, leave prose as-is (default)
+    #[default]
+    Preserve,
+}
+
+impl From<WrapMode> for crate::formatter::WrapMode {
+    fn from(mode: WrapMode) -> Self {
+        match mode {
+            WrapMode::Always => Self::Always,
+            WrapMode::Never => Self::Never,
+            WrapMode::Preserve => Self::Preserve,
+        }
+    }
+}
 
 /// Default directories to exclude when searching
 const DEFAULT_EXCLUDES: &[&str] = &["node_modules", "target", ".git", "vendor", "dist", "build"];
@@ -29,6 +51,10 @@ pub struct Args {
     /// Line width for wrapping (default: 80)
     #[arg(long, default_value = "80")]
     pub width: usize,
+
+    /// How to wrap prose: always (reflow to width), never (one line per paragraph), preserve (keep as-is)
+    #[arg(long, value_enum, default_value = "preserve")]
+    pub wrap: WrapMode,
 
     /// Additional directories to exclude (node_modules, target, .git, vendor, dist, build are excluded by default)
     #[arg(long = "exclude", value_name = "DIR")]

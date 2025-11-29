@@ -1,5 +1,29 @@
 use pulldown_cmark::{CowStr, Event, Tag};
 
+/// How to handle prose wrapping
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum WrapMode {
+    /// Wrap prose if it exceeds the print width
+    Always,
+    /// Un-wrap each block of prose into one line
+    Never,
+    /// Do nothing, leave prose as-is (default)
+    #[default]
+    Preserve,
+}
+
+impl WrapMode {
+    /// Parse from string (for CLI)
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s.to_lowercase().as_str() {
+            "always" => Some(Self::Always),
+            "never" => Some(Self::Never),
+            "preserve" => Some(Self::Preserve),
+            _ => None,
+        }
+    }
+}
+
 /// Represents an inline element that can be buffered before wrapping
 #[derive(Debug, Clone)]
 enum InlineElement {
@@ -55,6 +79,8 @@ pub struct Formatter {
     output: String,
     /// Target line width
     line_width: usize,
+    /// How to handle prose wrapping
+    wrap_mode: WrapMode,
     /// Buffer for accumulating inline elements before wrapping
     inline_buffer: Vec<InlineElement>,
     /// Context stack for tracking nesting
@@ -68,11 +94,17 @@ pub struct Formatter {
 }
 
 impl Formatter {
-    /// Create a new formatter with the given line width
+    /// Create a new formatter with the given line width and wrap mode
     pub fn new(line_width: usize) -> Self {
+        Self::with_wrap_mode(line_width, WrapMode::default())
+    }
+
+    /// Create a new formatter with the given line width and wrap mode
+    pub fn with_wrap_mode(line_width: usize, wrap_mode: WrapMode) -> Self {
         Self {
             output: String::new(),
             line_width,
+            wrap_mode,
             inline_buffer: Vec::new(),
             context_stack: Vec::new(),
             list_depth: 0,
@@ -171,7 +203,12 @@ impl Formatter {
                     result.push(')');
                 }
                 InlineElement::HardBreak => result.push('\u{FFFF}'), // Placeholder for hard break
-                InlineElement::SoftBreak => result.push(' '),
+                InlineElement::SoftBreak => {
+                    match self.wrap_mode {
+                        WrapMode::Preserve => result.push('\u{FFFE}'), // Placeholder for preserved line break
+                        WrapMode::Always | WrapMode::Never => result.push(' '),
+                    }
+                }
             }
         }
         result
@@ -180,8 +217,139 @@ impl Formatter {
     /// Wrap text to fit within line_width
     /// Returns wrapped text with proper line prefixes
     fn wrap_text(&self, text: &str, first_line_prefix: &str, continuation_prefix: &str) -> String {
-        // First, handle hard breaks by splitting on them
         let hard_break_placeholder = "\u{FFFF}";
+        let soft_break_placeholder = "\u{FFFE}";
+
+        match self.wrap_mode {
+            WrapMode::Preserve => {
+                // Preserve mode: keep line breaks as-is, just add prefixes
+                self.wrap_text_preserve(text, first_line_prefix, continuation_prefix, hard_break_placeholder, soft_break_placeholder)
+            }
+            WrapMode::Never => {
+                // Never mode: unwrap everything to single lines (per paragraph)
+                self.wrap_text_never(text, first_line_prefix, hard_break_placeholder)
+            }
+            WrapMode::Always => {
+                // Always mode: reflow text to fit width
+                self.wrap_text_always(text, first_line_prefix, continuation_prefix, hard_break_placeholder)
+            }
+        }
+    }
+
+    /// Preserve mode: keep original line breaks
+    fn wrap_text_preserve(
+        &self,
+        text: &str,
+        first_line_prefix: &str,
+        continuation_prefix: &str,
+        hard_break_placeholder: &str,
+        soft_break_placeholder: &str,
+    ) -> String {
+        let mut result = String::new();
+        let mut is_first_line = true;
+
+        // Split on both hard and soft break placeholders
+        // We need to track which type of break it was
+        let mut remaining = text;
+        
+        while !remaining.is_empty() {
+            // Find the next break (either hard or soft)
+            let hard_pos = remaining.find(hard_break_placeholder);
+            let soft_pos = remaining.find(soft_break_placeholder);
+            
+            let (segment, break_type, rest) = match (hard_pos, soft_pos) {
+                (Some(h), Some(s)) if h < s => {
+                    let (seg, rest) = remaining.split_at(h);
+                    (seg, Some("hard"), &rest[hard_break_placeholder.len()..])
+                }
+                (Some(h), Some(s)) if s < h => {
+                    let (seg, rest) = remaining.split_at(s);
+                    (seg, Some("soft"), &rest[soft_break_placeholder.len()..])
+                }
+                (Some(h), None) => {
+                    let (seg, rest) = remaining.split_at(h);
+                    (seg, Some("hard"), &rest[hard_break_placeholder.len()..])
+                }
+                (None, Some(s)) => {
+                    let (seg, rest) = remaining.split_at(s);
+                    (seg, Some("soft"), &rest[soft_break_placeholder.len()..])
+                }
+                (Some(h), Some(_)) => {
+                    // h == s, shouldn't happen, but handle it
+                    let (seg, rest) = remaining.split_at(h);
+                    (seg, Some("hard"), &rest[hard_break_placeholder.len()..])
+                }
+                (None, None) => {
+                    (remaining, None, "")
+                }
+            };
+            
+            // Add the prefix
+            let prefix = if is_first_line { first_line_prefix } else { continuation_prefix };
+            result.push_str(prefix);
+            
+            // Add the segment content (normalize internal whitespace but preserve words)
+            let words: Vec<&str> = segment.split_whitespace().collect();
+            result.push_str(&words.join(" "));
+            
+            // Add the appropriate line ending
+            match break_type {
+                Some("hard") => {
+                    result.push_str("  \n");
+                }
+                Some("soft") => {
+                    result.push('\n');
+                }
+                None => {}
+                _ => {}
+            }
+            
+            remaining = rest;
+            is_first_line = false;
+        }
+
+        result
+    }
+
+    /// Never mode: unwrap to single line
+    fn wrap_text_never(
+        &self,
+        text: &str,
+        first_line_prefix: &str,
+        hard_break_placeholder: &str,
+    ) -> String {
+        // Split on hard breaks - those we preserve
+        let segments: Vec<&str> = text.split(hard_break_placeholder).collect();
+        let mut result = String::new();
+
+        for (seg_idx, segment) in segments.iter().enumerate() {
+            let words: Vec<&str> = segment.split_whitespace().collect();
+            
+            if seg_idx == 0 {
+                result.push_str(first_line_prefix);
+            }
+            
+            result.push_str(&words.join(" "));
+            
+            // Add hard break if not the last segment
+            if seg_idx < segments.len() - 1 {
+                result.push_str("  \n");
+                result.push_str(first_line_prefix);
+            }
+        }
+
+        result
+    }
+
+    /// Always mode: reflow text to fit width (original behavior)
+    fn wrap_text_always(
+        &self,
+        text: &str,
+        first_line_prefix: &str,
+        continuation_prefix: &str,
+        hard_break_placeholder: &str,
+    ) -> String {
+        // First, handle hard breaks by splitting on them
         let segments: Vec<&str> = text.split(hard_break_placeholder).collect();
 
         let mut result = String::new();

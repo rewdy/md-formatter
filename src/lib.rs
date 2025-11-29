@@ -7,12 +7,12 @@ pub mod parser;
 #[cfg(feature = "napi")]
 pub mod napi;
 
-pub use formatter::Formatter;
+pub use formatter::{Formatter, WrapMode};
 pub use parser::{extract_frontmatter, parse_markdown};
 
 #[cfg(test)]
 mod tests {
-    use crate::{extract_frontmatter, parse_markdown, Formatter};
+    use crate::{extract_frontmatter, parse_markdown, Formatter, WrapMode};
 
     fn format_markdown(input: &str) -> String {
         let events = parse_markdown(input);
@@ -20,11 +20,17 @@ mod tests {
         formatter.format(events)
     }
 
+    fn format_markdown_always(input: &str) -> String {
+        let events = parse_markdown(input);
+        let mut formatter = Formatter::with_wrap_mode(80, WrapMode::Always);
+        formatter.format(events)
+    }
+
     /// Format markdown with frontmatter support
     fn format_markdown_full(input: &str) -> String {
         let (frontmatter, content) = extract_frontmatter(input);
         let events = parse_markdown(content);
-        let mut formatter = Formatter::new(80);
+        let mut formatter = Formatter::with_wrap_mode(80, WrapMode::Always);
         let formatted = formatter.format(events);
 
         if let Some(fm) = frontmatter {
@@ -73,7 +79,7 @@ mod tests {
     #[test]
     fn test_text_wrapping() {
         let input = "This is a very long line that should probably be wrapped because it exceeds the line width limit that we have set for the formatter.";
-        let output = format_markdown(input);
+        let output = format_markdown_always(input);
         // Check that it was wrapped (has multiple lines)
         assert!(output.lines().count() > 1);
     }
@@ -167,9 +173,9 @@ mod tests {
 
     #[test]
     fn test_no_spurious_hard_breaks() {
-        // A long line that gets wrapped should NOT have hard breaks
+        // A long line that gets wrapped should NOT have hard breaks (when using always mode)
         let input = "This is a very long line that needs to be wrapped because it exceeds eighty characters.";
-        let output = format_markdown(input);
+        let output = format_markdown_always(input);
         // Should not contain hard breaks (two spaces before newline)
         assert!(
             !output.contains("  \n"),
@@ -282,8 +288,8 @@ mod tests {
 
     #[test]
     fn test_no_hard_breaks_in_wrapped_output() {
-        // Format the bad version and check that wrapped lines don't have hard breaks
-        let formatted = format_markdown(SIMPLE_BAD);
+        // Format the bad version with always mode and check that wrapped lines don't have hard breaks
+        let formatted = format_markdown_always(SIMPLE_BAD);
 
         // Count hard breaks (lines ending with two spaces)
         let hard_break_count = formatted
