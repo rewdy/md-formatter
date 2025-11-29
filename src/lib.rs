@@ -7,12 +7,12 @@ pub mod parser;
 #[cfg(feature = "napi")]
 pub mod napi;
 
-pub use formatter::{Formatter, WrapMode};
+pub use formatter::{Formatter, OrderedListMode, WrapMode};
 pub use parser::{extract_frontmatter, parse_markdown};
 
 #[cfg(test)]
 mod tests {
-    use crate::{extract_frontmatter, parse_markdown, Formatter, WrapMode};
+    use crate::{extract_frontmatter, parse_markdown, Formatter, OrderedListMode, WrapMode};
 
     fn format_markdown(input: &str) -> String {
         let events = parse_markdown(input);
@@ -23,6 +23,12 @@ mod tests {
     fn format_markdown_always(input: &str) -> String {
         let events = parse_markdown(input);
         let mut formatter = Formatter::with_wrap_mode(80, WrapMode::Always);
+        formatter.format(events)
+    }
+
+    fn format_markdown_one(input: &str) -> String {
+        let events = parse_markdown(input);
+        let mut formatter = Formatter::with_options(80, WrapMode::default(), OrderedListMode::One);
         formatter.format(events)
     }
 
@@ -58,6 +64,38 @@ mod tests {
         let output = format_markdown(input);
         let expected = "- Item 1\n- Item 2\n- Item 3\n";
         assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_ordered_list_ascending_mode() {
+        // Default mode: items are numbered 1, 2, 3, ...
+        let input = "1. First\n1. Second\n1. Third";
+        let output = format_markdown(input);
+        assert!(output.contains("1. First"));
+        assert!(output.contains("2. Second"));
+        assert!(output.contains("3. Third"));
+    }
+
+    #[test]
+    fn test_multiple_ordered_list_ascending_mode() {
+        // Default mode: items are numbered 1, 2, 3, ...
+        let input = "1. First\n1. Second\n1. Third\n\nHere is one more\n\n1. Another\n1. List";
+        let output = format_markdown(input);
+        assert!(output.contains("1. First"));
+        assert!(output.contains("2. Second"));
+        assert!(output.contains("3. Third"));
+        assert!(output.contains("1. Another"));
+        assert!(output.contains("2. List"));
+    }
+
+    #[test]
+    fn test_ordered_list_one_mode() {
+        // One mode: all items use "1."
+        let input = "1. First\n2. Second\n3. Third";
+        let output = format_markdown_one(input);
+        assert!(output.contains("1. First"));
+        assert!(output.contains("1. Second"));
+        assert!(output.contains("1. Third"));
     }
 
     #[test]

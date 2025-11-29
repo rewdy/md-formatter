@@ -24,6 +24,25 @@ impl From<WrapMode> for crate::formatter::WrapMode {
     }
 }
 
+/// How to handle ordered list numbering
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, ValueEnum)]
+pub enum OrderedListMode {
+    /// Renumber items sequentially (1, 2, 3, ...) - default
+    #[default]
+    Ascending,
+    /// Use 1. for all items
+    One,
+}
+
+impl From<OrderedListMode> for crate::formatter::OrderedListMode {
+    fn from(mode: OrderedListMode) -> Self {
+        match mode {
+            OrderedListMode::Ascending => Self::Ascending,
+            OrderedListMode::One => Self::One,
+        }
+    }
+}
+
 /// Default directories to exclude when searching
 const DEFAULT_EXCLUDES: &[&str] = &["node_modules", "target", ".git", "vendor", "dist", "build"];
 
@@ -55,6 +74,10 @@ pub struct Args {
     /// How to wrap prose: always (reflow to width), never (one line per paragraph), preserve (keep as-is)
     #[arg(long, value_enum, default_value = "preserve")]
     pub wrap: WrapMode,
+
+    /// How to number ordered lists: ascending (1, 2, 3), one (all 1.)
+    #[arg(long = "ordered-list", value_enum, default_value = "ascending")]
+    pub ordered_list: OrderedListMode,
 
     /// Additional directories to exclude (node_modules, target, .git, vendor, dist, build are excluded by default)
     #[arg(long = "exclude", value_name = "DIR")]

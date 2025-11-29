@@ -29,6 +29,33 @@ impl FromStr for WrapMode {
     }
 }
 
+/// How to handle ordered list numbering
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum OrderedListMode {
+    /// Renumber items sequentially (1, 2, 3, ...) - default
+    #[default]
+    Ascending,
+    /// Use 1. for all items
+    One,
+    // Note: Preserve mode is not currently possible because pulldown-cmark
+    // doesn't provide the original item numbers in the event stream
+}
+
+impl FromStr for OrderedListMode {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "ascending" => Ok(Self::Ascending),
+            "one" => Ok(Self::One),
+            _ => Err(format!(
+                "Invalid ordered list mode: '{}'. Expected: ascending, one",
+                s
+            )),
+        }
+    }
+}
+
 /// Represents an inline element that can be buffered before wrapping
 #[derive(Debug, Clone)]
 enum InlineElement {
@@ -67,7 +94,7 @@ enum InlineElement {
 pub enum Context {
     Paragraph,
     Heading { level: u32 },
-    List { ordered: bool },
+    List { ordered: bool, item_count: usize },
     ListItem,
     Blockquote,
     CodeBlock,
@@ -86,6 +113,8 @@ pub struct Formatter {
     line_width: usize,
     /// How to handle prose wrapping
     wrap_mode: WrapMode,
+    /// How to handle ordered list numbering
+    ordered_list_mode: OrderedListMode,
     /// Buffer for accumulating inline elements before wrapping
     inline_buffer: Vec<InlineElement>,
     /// Context stack for tracking nesting
@@ -101,15 +130,25 @@ pub struct Formatter {
 impl Formatter {
     /// Create a new formatter with the given line width and wrap mode
     pub fn new(line_width: usize) -> Self {
-        Self::with_wrap_mode(line_width, WrapMode::default())
+        Self::with_options(line_width, WrapMode::default(), OrderedListMode::default())
     }
 
     /// Create a new formatter with the given line width and wrap mode
     pub fn with_wrap_mode(line_width: usize, wrap_mode: WrapMode) -> Self {
+        Self::with_options(line_width, wrap_mode, OrderedListMode::default())
+    }
+
+    /// Create a new formatter with all options
+    pub fn with_options(
+        line_width: usize,
+        wrap_mode: WrapMode,
+        ordered_list_mode: OrderedListMode,
+    ) -> Self {
         Self {
             output: String::new(),
             line_width,
             wrap_mode,
+            ordered_list_mode,
             inline_buffer: Vec::new(),
             context_stack: Vec::new(),
             list_depth: 0,
@@ -499,6 +538,7 @@ impl Formatter {
                 self.list_depth += 1;
                 self.context_stack.push(Context::List {
                     ordered: first_item_number.is_some(),
+                    item_count: 0,
                 });
             }
 
@@ -507,6 +547,23 @@ impl Formatter {
                 if !self.output.ends_with('\n') && !self.output.is_empty() {
                     self.output.push('\n');
                 }
+
+                // Increment the item count for the current list
+                let (is_ordered, item_number) = self
+                    .context_stack
+                    .iter_mut()
+                    .rev()
+                    .find_map(|c| match c {
+                        Context::List {
+                            ordered,
+                            item_count,
+                        } => {
+                            *item_count += 1;
+                            Some((*ordered, *item_count))
+                        }
+                        _ => None,
+                    })
+                    .unwrap_or((false, 1));
 
                 // Add blockquote prefix
                 let prefix = self.get_line_prefix();
@@ -518,18 +575,13 @@ impl Formatter {
                 }
 
                 // Add list marker
-                let is_ordered = self
-                    .context_stack
-                    .iter()
-                    .rev()
-                    .find_map(|c| match c {
-                        Context::List { ordered, .. } => Some(*ordered),
-                        _ => None,
-                    })
-                    .unwrap_or(false);
-
                 if is_ordered {
-                    self.output.push_str("1. ");
+                    match self.ordered_list_mode {
+                        OrderedListMode::One => self.output.push_str("1. "),
+                        OrderedListMode::Ascending => {
+                            self.output.push_str(&format!("{}. ", item_number));
+                        }
+                    }
                 } else {
                     self.output.push_str("- ");
                 }
