@@ -14,8 +14,10 @@
  *   node scripts/bump-version.mjs major           (0.1.0 -> 1.0.0)
  *   node scripts/bump-version.mjs 1.2.3           (set explicit version)
  *   node scripts/bump-version.mjs patch --dry-run (preview changes)
+ *   node scripts/bump-version.mjs patch --commit  (bump, commit, and tag)
  */
 
+import { execSync } from "node:child_process";
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -26,13 +28,34 @@ const ROOT = join(__dirname, "..");
 // Parse arguments
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
+const shouldCommit = args.includes("--commit");
 const bumpType = args.find((a) => !a.startsWith("--"));
 
 if (!bumpType) {
   console.error(
-    "Usage: bump-version.mjs <patch|minor|major|x.y.z> [--dry-run]"
+    "Usage: bump-version.mjs <patch|minor|major|x.y.z> [--dry-run] [--commit]"
   );
   process.exit(1);
+}
+
+if (dryRun && shouldCommit) {
+  console.error("Cannot use --dry-run and --commit together");
+  process.exit(1);
+}
+
+/**
+ * Run a git command and return the output
+ */
+function git(command) {
+  return execSync(`git ${command}`, { cwd: ROOT, encoding: "utf-8" }).trim();
+}
+
+/**
+ * Check if there are uncommitted changes
+ */
+function hasUncommittedChanges() {
+  const status = git("status --porcelain");
+  return status.length > 0;
 }
 
 /**
@@ -153,6 +176,13 @@ if (dryRun) {
   console.log("🔍 DRY RUN - no files will be modified\n");
 }
 
+// Check for uncommitted changes if --commit flag is used
+if (shouldCommit && hasUncommittedChanges()) {
+  console.error("❌ Error: You have uncommitted changes.");
+  console.error("   Please commit or stash them before using --commit.\n");
+  process.exit(1);
+}
+
 const changes = [];
 
 // Update Cargo.toml
@@ -180,7 +210,6 @@ if (changes.length === 0) {
 } else {
   console.log("Files updated:");
   for (const change of changes) {
-    const status = dryRun ? "would update" : "updated";
     console.log(`  ✓ ${change.file}: ${change.old} → ${change.new}`);
   }
   console.log(
@@ -188,7 +217,32 @@ if (changes.length === 0) {
   );
 }
 
-if (!dryRun && changes.length > 0) {
+// Handle --commit flag
+if (shouldCommit && changes.length > 0) {
+  console.log("\n🔧 Creating commit and tag...\n");
+
+  try {
+    // Stage all changes
+    git("add -A");
+    console.log("  ✓ Staged changes");
+
+    // Create commit
+    const commitMessage = `chore: bump version to ${newVersion}`;
+    git(`commit -m "${commitMessage}"`);
+    console.log(`  ✓ Created commit: "${commitMessage}"`);
+
+    // Create tag
+    const tag = `v${newVersion}`;
+    git(`tag ${tag}`);
+    console.log(`  ✓ Created tag: ${tag}`);
+
+    console.log(`\n✅ Done! To publish, run:`);
+    console.log(`  git push && git push origin ${tag}\n`);
+  } catch (error) {
+    console.error(`\n❌ Error during git operations: ${error.message}\n`);
+    process.exit(1);
+  }
+} else if (!dryRun && !shouldCommit && changes.length > 0) {
   console.log(`\nNext steps:`);
   console.log(`  git add -A`);
   console.log(`  git commit -m "chore: bump version to ${newVersion}"`);
