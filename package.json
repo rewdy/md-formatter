@@ -41,6 +41,7 @@
     "artifacts": "napi artifacts",
     "build": "napi build --platform --release --cargo-flags=\"--no-default-features\" --features napi",
     "build:debug": "napi build --platform --cargo-flags=\"--no-default-features\" --features napi",
+    "bump": "node scripts/bump-version.mjs",
     "clean": "cargo clean && rm -rf *.node",
     "prepublishOnly": "napi prepublish -t npm",
     "test": "node test.js",
