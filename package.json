@@ -1,6 +1,6 @@
 {
   "name": "@rewdy/md-formatter",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A fast, opinionated Markdown formatter written in Rust",
   "main": "index.js",
   "types": "index.d.ts",

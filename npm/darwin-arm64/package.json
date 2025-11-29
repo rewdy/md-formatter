@@ -1,10 +1,16 @@
 {
   "name": "@rewdy/md-formatter-darwin-arm64",
-  "version": "0.1.0",
-  "os": ["darwin"],
-  "cpu": ["arm64"],
+  "version": "0.1.1",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
   "main": "md-formatter.darwin-arm64.node",
-  "files": ["md-formatter.darwin-arm64.node"],
+  "files": [
+    "md-formatter.darwin-arm64.node"
+  ],
   "description": "macOS ARM64 binary for @rewdy/md-formatter",
   "license": "MIT",
   "engines": {

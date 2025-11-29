@@ -1,10 +1,16 @@
 {
   "name": "@rewdy/md-formatter-darwin-x64",
-  "version": "0.1.0",
-  "os": ["darwin"],
-  "cpu": ["x64"],
+  "version": "0.1.1",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "x64"
+  ],
   "main": "md-formatter.darwin-x64.node",
-  "files": ["md-formatter.darwin-x64.node"],
+  "files": [
+    "md-formatter.darwin-x64.node"
+  ],
   "description": "macOS x64 binary for @rewdy/md-formatter",
   "license": "MIT",
   "engines": {
