@@ -25,8 +25,7 @@ pub struct FormatResult {
 }
 
 fn parse_wrap_mode(wrap: Option<String>) -> WrapMode {
-    wrap.and_then(|s| WrapMode::from_str(&s))
-        .unwrap_or_default()
+    wrap.and_then(|s| s.parse().ok()).unwrap_or_default()
 }
 
 /// Format a markdown string with the given options.

@@ -1,4 +1,5 @@
 use pulldown_cmark::{CowStr, Event, Tag};
+use std::str::FromStr;
 
 /// How to handle prose wrapping
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -12,14 +13,18 @@ pub enum WrapMode {
     Preserve,
 }
 
-impl WrapMode {
-    /// Parse from string (for CLI)
-    pub fn from_str(s: &str) -> Option<Self> {
+impl FromStr for WrapMode {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "always" => Some(Self::Always),
-            "never" => Some(Self::Never),
-            "preserve" => Some(Self::Preserve),
-            _ => None,
+            "always" => Ok(Self::Always),
+            "never" => Ok(Self::Never),
+            "preserve" => Ok(Self::Preserve),
+            _ => Err(format!(
+                "Invalid wrap mode: '{}'. Expected: always, never, preserve",
+                s
+            )),
         }
     }
 }
@@ -223,7 +228,13 @@ impl Formatter {
         match self.wrap_mode {
             WrapMode::Preserve => {
                 // Preserve mode: keep line breaks as-is, just add prefixes
-                self.wrap_text_preserve(text, first_line_prefix, continuation_prefix, hard_break_placeholder, soft_break_placeholder)
+                self.wrap_text_preserve(
+                    text,
+                    first_line_prefix,
+                    continuation_prefix,
+                    hard_break_placeholder,
+                    soft_break_placeholder,
+                )
             }
             WrapMode::Never => {
                 // Never mode: unwrap everything to single lines (per paragraph)
@@ -231,7 +242,12 @@ impl Formatter {
             }
             WrapMode::Always => {
                 // Always mode: reflow text to fit width
-                self.wrap_text_always(text, first_line_prefix, continuation_prefix, hard_break_placeholder)
+                self.wrap_text_always(
+                    text,
+                    first_line_prefix,
+                    continuation_prefix,
+                    hard_break_placeholder,
+                )
             }
         }
     }
@@ -251,12 +267,12 @@ impl Formatter {
         // Split on both hard and soft break placeholders
         // We need to track which type of break it was
         let mut remaining = text;
-        
+
         while !remaining.is_empty() {
             // Find the next break (either hard or soft)
             let hard_pos = remaining.find(hard_break_placeholder);
             let soft_pos = remaining.find(soft_break_placeholder);
-            
+
             let (segment, break_type, rest) = match (hard_pos, soft_pos) {
                 (Some(h), Some(s)) if h < s => {
                     let (seg, rest) = remaining.split_at(h);
@@ -279,19 +295,21 @@ impl Formatter {
                     let (seg, rest) = remaining.split_at(h);
                     (seg, Some("hard"), &rest[hard_break_placeholder.len()..])
                 }
-                (None, None) => {
-                    (remaining, None, "")
-                }
+                (None, None) => (remaining, None, ""),
             };
-            
+
             // Add the prefix
-            let prefix = if is_first_line { first_line_prefix } else { continuation_prefix };
+            let prefix = if is_first_line {
+                first_line_prefix
+            } else {
+                continuation_prefix
+            };
             result.push_str(prefix);
-            
+
             // Add the segment content (normalize internal whitespace but preserve words)
             let words: Vec<&str> = segment.split_whitespace().collect();
             result.push_str(&words.join(" "));
-            
+
             // Add the appropriate line ending
             match break_type {
                 Some("hard") => {
@@ -303,7 +321,7 @@ impl Formatter {
                 None => {}
                 _ => {}
             }
-            
+
             remaining = rest;
             is_first_line = false;
         }
@@ -324,13 +342,13 @@ impl Formatter {
 
         for (seg_idx, segment) in segments.iter().enumerate() {
             let words: Vec<&str> = segment.split_whitespace().collect();
-            
+
             if seg_idx == 0 {
                 result.push_str(first_line_prefix);
             }
-            
+
             result.push_str(&words.join(" "));
-            
+
             // Add hard break if not the last segment
             if seg_idx < segments.len() - 1 {
                 result.push_str("  \n");

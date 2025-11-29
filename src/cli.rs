@@ -78,7 +78,7 @@ impl Args {
     }
 
     /// Check if a path should be excluded
-    fn should_exclude(&self, path: &PathBuf, excludes: &[String]) -> bool {
+    fn should_exclude(&self, path: &std::path::Path, excludes: &[String]) -> bool {
         for component in path.components() {
             if let std::path::Component::Normal(name) = component {
                 let name_str = name.to_string_lossy();
@@ -161,7 +161,7 @@ impl Args {
         Ok(())
     }
 
-    fn is_markdown_file(path: &PathBuf) -> bool {
+    fn is_markdown_file(path: &std::path::Path) -> bool {
         path.extension()
             .map(|ext| ext.to_string_lossy().to_lowercase() == "md")
             .unwrap_or(false)
