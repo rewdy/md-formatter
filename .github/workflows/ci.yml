@@ -96,12 +96,28 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu
+          mkdir -p .cargo
+          echo '[target.aarch64-unknown-linux-gnu]' >> .cargo/config.toml
+          echo 'linker = "aarch64-linux-gnu-gcc"' >> .cargo/config.toml
 
-      - name: Setup cross-compilation (Linux musl)
-        if: contains(matrix.settings.target, 'musl')
+      - name: Setup cross-compilation (Linux x86_64 musl)
+        if: matrix.settings.target == 'x86_64-unknown-linux-musl'
         run: |
           sudo apt-get update
           sudo apt-get install -y musl-tools
+
+      - name: Setup cross-compilation (Linux ARM64 musl)
+        if: matrix.settings.target == 'aarch64-unknown-linux-musl'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools
+          # Download and setup aarch64 musl cross-compiler
+          wget -q https://musl.cc/aarch64-linux-musl-cross.tgz
+          tar -xzf aarch64-linux-musl-cross.tgz
+          echo "$PWD/aarch64-linux-musl-cross/bin" >> $GITHUB_PATH
+          mkdir -p .cargo
+          echo '[target.aarch64-unknown-linux-musl]' >> .cargo/config.toml
+          echo 'linker = "aarch64-linux-musl-gcc"' >> .cargo/config.toml
 
       - name: Build
         run: ${{ matrix.settings.build }}
