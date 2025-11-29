@@ -29,7 +29,7 @@ const DEFAULT_EXCLUDES: &[&str] = &["node_modules", "target", ".git", "vendor", 
 
 #[derive(Parser, Debug)]
 #[command(name = "mdfmt")]
-#[command(version = "0.1.0")]
+#[command(version = env!("CARGO_PKG_VERSION"))]
 #[command(about = "Fast, opinionated Markdown formatter", long_about = None)]
 pub struct Args {
     /// Files or directories to format (supports glob patterns, use - for stdin)
