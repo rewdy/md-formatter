@@ -534,7 +534,12 @@ impl Formatter {
 
             Tag::List(first_item_number) => {
                 self.flush_inline_buffer();
-                self.ensure_blank_line();
+                // Only add blank line before top-level lists, not nested ones
+                // A nested list is one that starts while we're inside a ListItem
+                let in_list_item = self.context_stack.last() == Some(&Context::ListItem);
+                if !in_list_item {
+                    self.ensure_blank_line();
+                }
                 self.list_depth += 1;
                 self.context_stack.push(Context::List {
                     ordered: first_item_number.is_some(),

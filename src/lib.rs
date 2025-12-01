@@ -89,6 +89,13 @@ mod tests {
     }
 
     #[test]
+    fn test_nested_lists_have_no_empty_lines() {
+        let input = "- First\n- Second\n  - Subitem one\n  - Subitem two\n- Third";
+        let output = format_markdown(input);
+        assert!(!output.contains("\n\n  - Subitem one"));
+    }
+
+    #[test]
     fn test_ordered_list_one_mode() {
         // One mode: all items use "1."
         let input = "1. First\n2. Second\n3. Third";
