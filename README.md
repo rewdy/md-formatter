@@ -216,12 +216,6 @@ const isFormatted = checkMarkdown(input);
 - Frontmatter (YAML blocks preserved)
 - GFM strikethrough and autolinks
 
-### Design Philosophy
-
-Uses hard breaks (two spaces + newline) instead of soft breaks to ensure  
-idempotence. This prevents Markdown parsers from reinterpreting wrapped lines as  
-soft breaks on re-parsing.
-
 ## Performance
 
 | Scenario | Time | Throughput |
@@ -283,34 +277,11 @@ cargo test --release --lib test_idempotence -- --nocapture
 cargo build --release
 ```
 
-**Current status:** 25 unit tests passing ✓
-
 ## Known Limitations
 
 - **Autolinks** - Converted to regular links (parser limitation)
 - **Configuration** - Only `--width`, `--wrap`, and `--ordered-list` options supported (by design)
 - **MDX** - Not supported (different language)
-
-## Project Structure
-
-```bash
-src/
-├── main.rs       - CLI entry point and file I/O
-├── cli.rs        - Argument parsing (clap)
-├── formatter.rs  - Core formatting logic (~430 lines)
-├── parser.rs     - Markdown parsing and frontmatter extraction
-└── lib.rs        - Public API and unit tests (14 tests)
-```
-
-## Status
-
-**Version:** 0.1.1  
-**MVP:** Complete ✓  
-**Tests:** 25/25 passing ✓  
-**Idempotence:** Verified ✓  
-**Performance:** Excellent ✓
-
-See `STATUS.md` for detailed feature matrix and quality metrics.
 
 ## Contributing
 
